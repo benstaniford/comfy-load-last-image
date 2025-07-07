@@ -1,0 +1,24 @@
+{
+  "1": {
+    "inputs": {
+      "folder_path": "C:\\path\\to\\your\\images",
+      "image_extensions": "jpg,jpeg,png,bmp,tiff,tif,webp"
+    },
+    "class_type": "LoadMostRecentImage",
+    "_meta": {
+      "title": "Load Most Recent Image"
+    }
+  },
+  "2": {
+    "inputs": {
+      "images": [
+        "1",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  }
+}
