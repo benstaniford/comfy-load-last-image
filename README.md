@@ -5,15 +5,30 @@ A custom ComfyUI node that automatically loads the most recent image from a spec
 ## Features
 
 - 🔄 Automatically loads the most recent image from a specified folder
-- 🖼️ Supports multiple image formats (JPG, PNG, BMP, TIFF, WebP, etc.)
+- 🖼️ Supports multiple image formats (JPG, PNG, BMP, TIFF, WebP, GIF)
 - 📁 Configurable folder path input
-- 🎭 Provides both image and mask outputs
+- 🎭 Provides both image and mask outputs (with proper alpha channel handling)
 - ⚡ Efficient file scanning with timestamp-based selection
 - 🔍 Customizable image file extensions
+- ✅ Full ComfyUI validation and error handling
+- 🔒 Robust image format validation and error reporting
 
 ## Installation
 
-### Method 1: Git Clone (Recommended)
+### Method 1: Using the Install Script (Recommended)
+1. Download or clone this repository
+2. Open a terminal/command prompt in the downloaded folder
+3. Run the installation script:
+   ```bash
+   python install.py
+   ```
+   Or specify your ComfyUI path manually:
+   ```bash
+   python install.py --comfyui-path "C:\path\to\your\ComfyUI"
+   ```
+4. Restart ComfyUI
+
+### Method 2: Git Clone
 1. Navigate to your ComfyUI custom nodes directory:
    ```bash
    cd ComfyUI/custom_nodes/
@@ -26,7 +41,7 @@ A custom ComfyUI node that automatically loads the most recent image from a spec
 
 3. Restart ComfyUI
 
-### Method 2: Manual Installation
+### Method 3: Manual Installation
 1. Download the repository as a ZIP file
 2. Extract it to your `ComfyUI/custom_nodes/` directory
 3. Restart ComfyUI
@@ -64,17 +79,39 @@ The node:
 - Handles both RGB and RGBA images
 - Provides proper mask output from alpha channels or creates a default white mask
 
-## Requirements
+## Troubleshooting
 
-- ComfyUI
-- Python 3.8+
-- PIL (Pillow)
-- torch
-- numpy
+### "Invalid image file" Error
+If you get an error like "Invalid image file: filename.png", this usually means:
+1. The image file is corrupted or incomplete
+2. The file has an unsupported format
+3. The file extension doesn't match the actual content
 
-## License
+**Solutions:**
+- Check if the image opens correctly in an image viewer
+- Try with a different image format (PNG is usually most reliable)
+- Ensure the file is completely written (not still being created by another process)
 
-MIT License - see LICENSE file for details.
+### "No image files found" Error
+This means the node couldn't find any images in the specified folder.
+
+**Solutions:**
+- Verify the folder path is correct
+- Check the `image_extensions` parameter includes the formats you're using
+- Ensure the folder actually contains image files
+
+### Node Not Appearing in ComfyUI
+If the node doesn't appear after installation:
+1. Restart ComfyUI completely
+2. Check the ComfyUI console for any error messages
+3. Verify the node files are in the correct location (`ComfyUI/custom_nodes/comfy-load-last-image/`)
+4. Make sure all required files (`__init__.py`, `load_most_recent_image.py`) are present
+
+### Performance Issues
+If the node is slow when scanning large folders:
+- Consider organizing images into smaller subfolders
+- Use more specific file extensions to reduce scanning time
+- The node caches file information, so subsequent runs should be faster
 
 ## Contributing
 
@@ -82,4 +119,12 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-If you encounter any issues, please create an issue on the GitHub repository.
+If you encounter any issues, please create an issue on the GitHub repository with:
+- Your ComfyUI version
+- The error message (if any)
+- A description of what you were trying to do
+- Your operating system
+
+## License
+
+MIT License - see LICENSE file for details.

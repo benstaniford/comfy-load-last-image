@@ -42,6 +42,7 @@ class LoadMostRecentImage:
     RETURN_NAMES = ("image", "mask")
     FUNCTION = "load_most_recent_image"
     CATEGORY = "image"
+    OUTPUT_NODE = False
     
     def load_most_recent_image(self, folder_path, image_extensions="jpg,jpeg,png,bmp,tiff,tif,webp"):
         """
@@ -82,39 +83,114 @@ class LoadMostRecentImage:
         
         print(f"Loading most recent image: {most_recent_file}")
         
-        # Load the image
+        # Load and validate the image
         try:
+            # First, validate the image file
+            self._validate_image_file(most_recent_file)
+            
+            # Load the image
             image = Image.open(most_recent_file)
             
-            # Convert to RGB if necessary
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
+            # Handle different image modes
+            output_images = []
+            output_masks = []
             
-            # Convert to tensor format expected by ComfyUI
+            # Convert image based on mode
+            if image.mode == 'I':
+                # 32-bit integer mode
+                image = image.point(lambda i: i * (1 / 255))
+            
+            if 'transparency' in image.info:
+                # Handle transparency
+                image = image.convert('RGBA')
+            
+            if image.mode == 'RGBA':
+                # Extract alpha channel for mask
+                alpha = image.split()[-1]
+                mask = np.array(alpha).astype(np.float32) / 255.0
+                mask = 1.0 - mask  # Invert mask for ComfyUI convention
+                image = image.convert('RGB')
+            else:
+                # Convert to RGB
+                image = image.convert('RGB')
+                # Create default mask (all white/opaque)
+                mask = np.ones((image.height, image.width), dtype=np.float32)
+            
+            # Convert image to tensor
             image_array = np.array(image).astype(np.float32) / 255.0
             image_tensor = torch.from_numpy(image_array)[None,]  # Add batch dimension
             
-            # Create mask - ComfyUI expects a mask even if we don't have alpha
-            if 'A' in Image.open(most_recent_file).mode:
-                # If original image has alpha channel, use it as mask
-                original_image = Image.open(most_recent_file)
-                if original_image.mode == 'RGBA':
-                    alpha = original_image.split()[-1]
-                    mask_array = np.array(alpha).astype(np.float32) / 255.0
-                    mask_tensor = torch.from_numpy(mask_array)[None,]
-                else:
-                    # Create a white mask (fully opaque)
-                    mask_array = np.ones((image_array.shape[0], image_array.shape[1]), dtype=np.float32)
-                    mask_tensor = torch.from_numpy(mask_array)[None,]
-            else:
-                # Create a white mask (fully opaque)
-                mask_array = np.ones((image_array.shape[0], image_array.shape[1]), dtype=np.float32)
-                mask_tensor = torch.from_numpy(mask_array)[None,]
+            # Convert mask to tensor
+            mask_tensor = torch.from_numpy(mask)[None,]  # Add batch dimension
             
             return (image_tensor, mask_tensor)
             
         except Exception as e:
             raise ValueError(f"Error loading image {most_recent_file}: {str(e)}")
+    
+    def _validate_image_file(self, image_path):
+        """
+        Validate that the image file is valid and can be opened.
+        This mirrors the validation logic from ComfyUI's built-in LoadImage node.
+        """
+        try:
+            with Image.open(image_path) as img:
+                # Try to load the image data to ensure it's valid
+                img.load()
+                # Check if it's a valid image format
+                if img.format not in ['JPEG', 'PNG', 'BMP', 'TIFF', 'WEBP', 'GIF']:
+                    raise ValueError(f"Unsupported image format: {img.format}")
+        except Exception as e:
+            raise ValueError(f"Invalid image file: {os.path.basename(image_path)} - {str(e)}")
+    
+    @classmethod
+    def VALIDATE_INPUTS(cls, folder_path, image_extensions="jpg,jpeg,png,bmp,tiff,tif,webp"):
+        """
+        Validate inputs before execution.
+        This method is called by ComfyUI to validate the node inputs.
+        """
+        # Validate folder path
+        if not folder_path:
+            return "Folder path cannot be empty"
+        
+        if not os.path.exists(folder_path):
+            return f"Folder path does not exist: {folder_path}"
+        
+        if not os.path.isdir(folder_path):
+            return f"Path is not a directory: {folder_path}"
+        
+        # Parse extensions
+        try:
+            extensions = [ext.strip().lower() for ext in image_extensions.split(",")]
+            extensions = [ext if ext.startswith('.') else f".{ext}" for ext in extensions]
+        except Exception as e:
+            return f"Invalid image extensions format: {str(e)}"
+        
+        # Find all image files
+        image_files = []
+        for ext in extensions:
+            pattern = os.path.join(folder_path, f"*{ext}")
+            image_files.extend(glob.glob(pattern))
+            pattern = os.path.join(folder_path, f"*{ext.upper()}")
+            image_files.extend(glob.glob(pattern))
+        
+        if not image_files:
+            return f"No image files found in folder: {folder_path}"
+        
+        # Find the most recent file and validate it
+        try:
+            most_recent_file = max(image_files, key=os.path.getmtime)
+            
+            # Validate the image file
+            with Image.open(most_recent_file) as img:
+                img.load()
+                if img.format not in ['JPEG', 'PNG', 'BMP', 'TIFF', 'WEBP', 'GIF']:
+                    return f"Unsupported image format: {img.format}"
+                    
+        except Exception as e:
+            return f"Error validating most recent image: {str(e)}"
+        
+        return True
     
     @classmethod
     def IS_CHANGED(cls, folder_path, image_extensions="jpg,jpeg,png,bmp,tiff,tif,webp"):

@@ -63,6 +63,13 @@ def test_load_most_recent_image():
             
             print("✅ Basic loading test passed!")
             
+            # Test VALIDATE_INPUTS functionality
+            validation_result = node.VALIDATE_INPUTS(test_dir)
+            print(f"VALIDATE_INPUTS returned: {validation_result}")
+            assert validation_result is True, f"VALIDATE_INPUTS should return True, got {validation_result}"
+            
+            print("✅ VALIDATE_INPUTS test passed!")
+            
             # Test IS_CHANGED functionality
             timestamp = node.IS_CHANGED(test_dir)
             print(f"IS_CHANGED returned: {timestamp}")
@@ -97,6 +104,14 @@ def test_error_conditions():
     except ValueError as e:
         print(f"✅ Correctly raised error for non-existent directory: {e}")
     
+    # Test VALIDATE_INPUTS with non-existent directory
+    validation_result = node.VALIDATE_INPUTS("/non/existent/directory")
+    if validation_result is not True:
+        print(f"✅ VALIDATE_INPUTS correctly failed for non-existent directory: {validation_result}")
+    else:
+        print("❌ VALIDATE_INPUTS should have failed for non-existent directory")
+        return False
+    
     # Test with empty directory
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
@@ -105,6 +120,14 @@ def test_error_conditions():
             return False
         except ValueError as e:
             print(f"✅ Correctly raised error for empty directory: {e}")
+        
+        # Test VALIDATE_INPUTS with empty directory
+        validation_result = node.VALIDATE_INPUTS(temp_dir)
+        if validation_result is not True:
+            print(f"✅ VALIDATE_INPUTS correctly failed for empty directory: {validation_result}")
+        else:
+            print("❌ VALIDATE_INPUTS should have failed for empty directory")
+            return False
     
     print("🎉 Error condition tests passed!")
     return True
