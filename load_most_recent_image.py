@@ -1,17 +1,8 @@
 import os
 import glob
-from PIL import Image, ImageOps
+from PIL import Image
 import torch
 import numpy as np
-from pathlib import Path
-
-# ComfyUI specific imports - these will be available when running in ComfyUI
-try:
-    import folder_paths
-except ImportError:
-    # This is expected when developing outside of ComfyUI
-    folder_paths = None
-
 
 class LoadMostRecentImage:
     """
@@ -110,11 +101,7 @@ class LoadMostRecentImage:
             
             # Load the image
             image = Image.open(selected_file)
-            
-            # Handle different image modes
-            output_images = []
-            output_masks = []
-            
+
             # Convert image based on mode
             if image.mode == 'I':
                 # 32-bit integer mode
