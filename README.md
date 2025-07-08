@@ -1,6 +1,6 @@
 # ComfyUI Load Most Recent Image Node
 
-A custom ComfyUI node that automatically loads the most recent image from a specified folder. This node is similar to the built-in "Load Image" node but automatically selects the newest file based on modification timestamp.
+A custom ComfyUI node that automatically loads the most recent image from a specified folder. This node is similar to the built-in "Load Image" node but automatically selects the newest file based on modification timestamp and can iterate back.  It's useful for "do-over" workflows.
 
 ## Features
 
@@ -9,10 +9,7 @@ A custom ComfyUI node that automatically loads the most recent image from a spec
 - 📁 Configurable folder path input
 - 📊 **Index-based selection**: Choose which image to load by recency (0 = most recent, 1 = second most recent, etc.)
 - 🎭 Provides both image and mask outputs (with proper alpha channel handling)
-- ⚡ Efficient file scanning with timestamp-based selection
 - 🔍 Customizable image file extensions
-- ✅ Full ComfyUI validation and error handling
-- 🔒 Robust image format validation and error reporting
 
 ## Installation
 
@@ -113,12 +110,6 @@ If the node doesn't appear after installation:
 2. Check the ComfyUI console for any error messages
 3. Verify the node files are in the correct location (`ComfyUI/custom_nodes/comfy-load-last-image/`)
 4. Make sure all required files (`__init__.py`, `load_most_recent_image.py`) are present
-
-### Performance Issues
-If the node is slow when scanning large folders:
-- Consider organizing images into smaller subfolders
-- Use more specific file extensions to reduce scanning time
-- The node caches file information, so subsequent runs should be faster
 
 ## Contributing
 
