@@ -13,20 +13,6 @@ A custom ComfyUI node that automatically loads the most recent image from a spec
 
 ## Installation
 
-### Method 1: Using the Install Script (Recommended)
-1. Download or clone this repository
-2. Open a terminal/command prompt in the downloaded folder
-3. Run the installation script:
-   ```bash
-   python install.py
-   ```
-   Or specify your ComfyUI path manually:
-   ```bash
-   python install.py --comfyui-path "C:\path\to\your\ComfyUI"
-   ```
-4. Restart ComfyUI
-
-### Method 2: Git Clone
 1. Navigate to your ComfyUI custom nodes directory:
    ```bash
    cd ComfyUI/custom_nodes/
@@ -37,11 +23,6 @@ A custom ComfyUI node that automatically loads the most recent image from a spec
    git clone https://github.com/your-username/comfy-load-last-image.git
    ```
 
-3. Restart ComfyUI
-
-### Method 3: Manual Installation
-1. Download the repository as a ZIP file
-2. Extract it to your `ComfyUI/custom_nodes/` directory
 3. Restart ComfyUI
 
 ## Usage
