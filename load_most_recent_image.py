@@ -15,8 +15,13 @@ except ImportError:
 
 class LoadMostRecentImage:
     """
-    A ComfyUI node that loads the most recent image from a specified folder.
-    Similar to the built-in Load Image node but automatically selects the newest file.
+    A ComfyUI node that loads images from a specified folder by recency.
+    Similar to the built-in Load Image node but automatically selects files by timestamp.
+    
+    Features:
+    - Index 0 = most recent image
+    - Index 1 = second most recent image
+    - Index 2 = third most recent image, etc.
     """
     
     @classmethod
@@ -35,6 +40,13 @@ class LoadMostRecentImage:
                     "multiline": False,
                     "placeholder": "Comma-separated extensions"
                 }),
+                "index": ("INT", {
+                    "default": 0,
+                    "min": 0,
+                    "max": 1000,
+                    "step": 1,
+                    "display": "number"
+                }),
             }
         }
     
@@ -44,13 +56,14 @@ class LoadMostRecentImage:
     CATEGORY = "image"
     OUTPUT_NODE = False
     
-    def load_most_recent_image(self, folder_path, image_extensions="jpg,jpeg,png,bmp,tiff,tif,webp"):
+    def load_most_recent_image(self, folder_path, image_extensions="jpg,jpeg,png,bmp,tiff,tif,webp", index=0):
         """
         Load the most recent image from the specified folder.
         
         Args:
             folder_path: Path to the folder containing images
             image_extensions: Comma-separated list of image extensions to look for
+            index: Index of the image to load (0 = most recent, 1 = second most recent, etc.)
             
         Returns:
             tuple: (image_tensor, mask_tensor)
@@ -78,18 +91,25 @@ class LoadMostRecentImage:
         if not image_files:
             raise ValueError(f"No image files found in folder: {folder_path}")
         
-        # Find the most recent file by modification time
-        most_recent_file = max(image_files, key=os.path.getmtime)
+        # Sort files by modification time (most recent first)
+        image_files.sort(key=os.path.getmtime, reverse=True)
         
-        print(f"Loading most recent image: {most_recent_file}")
+        # Validate index
+        if index >= len(image_files):
+            raise ValueError(f"Index {index} is out of range. Only {len(image_files)} image(s) found in folder.")
+        
+        # Select the image at the specified index
+        selected_file = image_files[index]
+        
+        print(f"Loading image at index {index}: {selected_file}")
         
         # Load and validate the image
         try:
             # First, validate the image file
-            self._validate_image_file(most_recent_file)
+            self._validate_image_file(selected_file)
             
             # Load the image
-            image = Image.open(most_recent_file)
+            image = Image.open(selected_file)
             
             # Handle different image modes
             output_images = []
@@ -126,7 +146,7 @@ class LoadMostRecentImage:
             return (image_tensor, mask_tensor)
             
         except Exception as e:
-            raise ValueError(f"Error loading image {most_recent_file}: {str(e)}")
+            raise ValueError(f"Error loading image {selected_file}: {str(e)}")
     
     def _validate_image_file(self, image_path):
         """
@@ -144,7 +164,7 @@ class LoadMostRecentImage:
             raise ValueError(f"Invalid image file: {os.path.basename(image_path)} - {str(e)}")
     
     @classmethod
-    def VALIDATE_INPUTS(cls, folder_path, image_extensions="jpg,jpeg,png,bmp,tiff,tif,webp"):
+    def VALIDATE_INPUTS(cls, folder_path, image_extensions="jpg,jpeg,png,bmp,tiff,tif,webp", index=0):
         """
         Validate inputs before execution.
         This method is called by ComfyUI to validate the node inputs.
@@ -158,6 +178,10 @@ class LoadMostRecentImage:
         
         if not os.path.isdir(folder_path):
             return f"Path is not a directory: {folder_path}"
+        
+        # Validate index
+        if index < 0:
+            return f"Index must be non-negative, got: {index}"
         
         # Parse extensions
         try:
@@ -177,25 +201,32 @@ class LoadMostRecentImage:
         if not image_files:
             return f"No image files found in folder: {folder_path}"
         
-        # Find the most recent file and validate it
+        # Check if index is within range
+        if index >= len(image_files):
+            return f"Index {index} is out of range. Only {len(image_files)} image(s) found in folder."
+        
+        # Sort files by modification time (most recent first)
+        image_files.sort(key=os.path.getmtime, reverse=True)
+        
+        # Find the file at the specified index and validate it
         try:
-            most_recent_file = max(image_files, key=os.path.getmtime)
+            selected_file = image_files[index]
             
             # Validate the image file
-            with Image.open(most_recent_file) as img:
+            with Image.open(selected_file) as img:
                 img.load()
                 if img.format not in ['JPEG', 'PNG', 'BMP', 'TIFF', 'WEBP', 'GIF']:
                     return f"Unsupported image format: {img.format}"
                     
         except Exception as e:
-            return f"Error validating most recent image: {str(e)}"
+            return f"Error validating image at index {index}: {str(e)}"
         
         return True
     
     @classmethod
-    def IS_CHANGED(cls, folder_path, image_extensions="jpg,jpeg,png,bmp,tiff,tif,webp"):
+    def IS_CHANGED(cls, folder_path, image_extensions="jpg,jpeg,png,bmp,tiff,tif,webp", index=0):
         """
-        Check if the most recent image in the folder has changed.
+        Check if the image at the specified index in the folder has changed.
         This helps ComfyUI know when to reload the node.
         """
         if not folder_path or not os.path.exists(folder_path):
@@ -217,9 +248,16 @@ class LoadMostRecentImage:
             if not image_files:
                 return float("NaN")
             
-            # Return the modification time of the most recent file
-            most_recent_file = max(image_files, key=os.path.getmtime)
-            return os.path.getmtime(most_recent_file)
+            # Sort files by modification time (most recent first)
+            image_files.sort(key=os.path.getmtime, reverse=True)
+            
+            # Check if index is within range
+            if index >= len(image_files):
+                return float("NaN")
+            
+            # Return the modification time of the file at the specified index
+            selected_file = image_files[index]
+            return os.path.getmtime(selected_file)
             
         except Exception:
             return float("NaN")

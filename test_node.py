@@ -48,8 +48,8 @@ def test_load_most_recent_image():
         node = LoadMostRecentImage()
         
         try:
-            # Test loading the most recent image
-            result = node.load_most_recent_image(test_dir)
+            # Test loading the most recent image (index 0)
+            result = node.load_most_recent_image(test_dir, index=0)
             image_tensor, mask_tensor = result
             
             print(f"Image tensor shape: {image_tensor.shape}")
@@ -61,25 +61,45 @@ def test_load_most_recent_image():
             assert image_tensor.shape[0] == 1, f"Expected batch size 1, got {image_tensor.shape[0]}"
             assert image_tensor.shape[3] == 3, f"Expected 3 color channels, got {image_tensor.shape[3]}"
             
-            print("✅ Basic loading test passed!")
+            print("✅ Basic loading test (index 0) passed!")
+            
+            # Test loading the second most recent image (index 1)
+            result2 = node.load_most_recent_image(test_dir, index=1)
+            image_tensor2, mask_tensor2 = result2
+            
+            print("✅ Second most recent image (index 1) loaded successfully!")
+            
+            # Test loading the oldest image (index 2)
+            result3 = node.load_most_recent_image(test_dir, index=2)
+            image_tensor3, mask_tensor3 = result3
+            
+            print("✅ Oldest image (index 2) loaded successfully!")
             
             # Test VALIDATE_INPUTS functionality
-            validation_result = node.VALIDATE_INPUTS(test_dir)
+            validation_result = node.VALIDATE_INPUTS(test_dir, index=0)
             print(f"VALIDATE_INPUTS returned: {validation_result}")
             assert validation_result is True, f"VALIDATE_INPUTS should return True, got {validation_result}"
             
             print("✅ VALIDATE_INPUTS test passed!")
             
             # Test IS_CHANGED functionality
-            timestamp = node.IS_CHANGED(test_dir)
+            timestamp = node.IS_CHANGED(test_dir, index=0)
             print(f"IS_CHANGED returned: {timestamp}")
             assert not np.isnan(timestamp), "IS_CHANGED should return a valid timestamp"
             
             print("✅ IS_CHANGED test passed!")
             
             # Test with custom extensions
-            result2 = node.load_most_recent_image(test_dir, "png,jpg")
+            result2 = node.load_most_recent_image(test_dir, "png,jpg", index=0)
             print("✅ Custom extensions test passed!")
+            
+            # Test index out of range
+            try:
+                node.load_most_recent_image(test_dir, index=10)
+                print("❌ Should have raised error for index out of range")
+                return False
+            except ValueError as e:
+                print(f"✅ Correctly raised error for index out of range: {e}")
             
             print("🎉 All tests passed!")
             
@@ -127,6 +147,21 @@ def test_error_conditions():
             print(f"✅ VALIDATE_INPUTS correctly failed for empty directory: {validation_result}")
         else:
             print("❌ VALIDATE_INPUTS should have failed for empty directory")
+            return False
+    
+    # Test index out of range validation
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create just one test image
+        img = Image.new('RGB', (50, 50), (255, 0, 0))
+        img_path = os.path.join(temp_dir, "single_image.png")
+        img.save(img_path)
+        
+        # Test validation with index out of range
+        validation_result = node.VALIDATE_INPUTS(temp_dir, index=5)
+        if validation_result is not True:
+            print(f"✅ VALIDATE_INPUTS correctly failed for index out of range: {validation_result}")
+        else:
+            print("❌ VALIDATE_INPUTS should have failed for index out of range")
             return False
     
     print("🎉 Error condition tests passed!")

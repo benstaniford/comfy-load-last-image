@@ -4,9 +4,10 @@ A custom ComfyUI node that automatically loads the most recent image from a spec
 
 ## Features
 
-- 🔄 Automatically loads the most recent image from a specified folder
+- 🔄 Automatically loads images from a specified folder by recency
 - 🖼️ Supports multiple image formats (JPG, PNG, BMP, TIFF, WebP, GIF)
 - 📁 Configurable folder path input
+- 📊 **Index-based selection**: Choose which image to load by recency (0 = most recent, 1 = second most recent, etc.)
 - 🎭 Provides both image and mask outputs (with proper alpha channel handling)
 - ⚡ Efficient file scanning with timestamp-based selection
 - 🔍 Customizable image file extensions
@@ -56,7 +57,11 @@ A custom ComfyUI node that automatically loads the most recent image from a spec
 ### Parameters
 
 - **folder_path** (required): Path to the folder containing images
-- **image_extensions** (optional): Comma-separated list of image file extensions to search for
+- **image_extensions** (optional): Comma-separated list of image file extensions to search for (default: "jpg,jpeg,png,bmp,tiff,tif,webp")
+- **index** (optional): Which image to load by recency (default: 0)
+  - `0` = most recent image
+  - `1` = second most recent image
+  - `2` = third most recent image, etc.
 
 ### Outputs
 
@@ -65,10 +70,12 @@ A custom ComfyUI node that automatically loads the most recent image from a spec
 
 ## Example Use Cases
 
-- 🎨 Automatically load the latest generated image from an output folder
-- 📸 Process the most recent screenshot or photo
-- 🔄 Create workflows that automatically work with new images as they're added
-- 🎬 Animation workflows that process the latest frame
+- 🎨 **Latest Generation**: Load the most recent generated image from an output folder (index=0)
+- 📸 **Previous Results**: Compare current vs previous generation by switching between index=0 and index=1
+- 🔄 **Batch Processing**: Process multiple recent images by incrementing the index
+- 🎬 **Animation Workflows**: Load frames in reverse chronological order
+- 🔍 **Quality Control**: Review recent outputs by stepping through different index values
+- 📊 **A/B Testing**: Compare different versions of generated content
 
 ## Technical Details
 
